@@ -7,13 +7,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -68,15 +76,59 @@ fun DataStoreDemo(modifier: Modifier) {
     val store = AppStorage(LocalContext.current)
     val appPrefs = store.appPreferenceFlow.collectAsState(AppPreferences())
     val coroutineScope = rememberCoroutineScope()
+    // my solution todo2:
+    var username by remember { mutableStateOf("") }
     Column (modifier = Modifier.padding(50.dp)) {
+        // my solution todo4:
         Text("Values = ${appPrefs.value.userName}, " +
                 "${appPrefs.value.highScore}, ${appPrefs.value.darkMode}")
-        Button(onClick = {
-            coroutineScope.launch {
-                store.saveUsername("somevaluehere")
-            }
 
-        }) {
+        // my solution todo2:
+        androidx.compose.material3.TextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Enter username") },
+            modifier = Modifier.padding(top = 16.dp)
+        )
+
+        // my solution todo1:
+        Row(modifier = Modifier.padding(top = 16.dp)) {
+            Text("Dark Mode: ${appPrefs.value.darkMode}")
+            Spacer(Modifier.width(12.dp))
+            Switch(
+                checked = appPrefs.value.darkMode,
+                onCheckedChange = { checked ->
+                    coroutineScope.launch {
+                        store.saveDarkMode(checked)
+                    }
+                }
+            )
+        }
+        Row(modifier = Modifier.padding(top = 16.dp)) {
+            Text("High Score: ${appPrefs.value.highScore}")
+            Spacer(Modifier.width(12.dp))
+            Button(onClick = {
+                coroutineScope.launch {
+                    store.saveHighScore(appPrefs.value.highScore + 1)
+                }
+            }) { Text("+1") }
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = {
+                coroutineScope.launch {
+                    store.saveHighScore((appPrefs.value.highScore - 1).coerceAtLeast(0))
+                }
+            }) { Text("-1") }
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    // my solution todo3:
+                    store.saveUsername(username)
+                }
+            },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
             Text("Save Values")
         }
     }
@@ -86,5 +138,3 @@ fun DataStoreDemo(modifier: Modifier) {
 // ToDo 2: Modify the APP to store the username through a text field
 // ToDo 3: Modify the App to save the username when the button is clicked
 // ToDo 4: Modify the App to display the values stored in the DataStore
-
-
